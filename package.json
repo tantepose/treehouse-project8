@@ -11,11 +11,15 @@
   "devDependencies": {
     "del": "^3.0.0",
     "gulp": "^3.9.1",
+    "gulp-clean-css": "^3.9.3",
     "gulp-concat": "^2.6.1",
+    "gulp-image": "^4.3.0",
     "gulp-rename": "^1.2.2",
     "gulp-sass": "^3.1.0",
     "gulp-sourcemaps": "^2.6.4",
-    "gulp-uglify": "^3.0.0"
+    "gulp-uglify": "^3.0.0",
+    "gulp-webserver": "^0.9.1",
+    "run-sequence": "^2.2.1"
   },
   "dependencies": {}
 }
