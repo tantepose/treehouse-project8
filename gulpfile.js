@@ -3,7 +3,10 @@ Treehouse Fullstack Javascript Techdegree,
 project #8: "Using Gulp to Build a Front End Website"
 by Ole Petter Baugerød Stokke
 www.olepetterstokke.no/treehouse/project8
-******************************************/
+*******************************************/
+
+// Run 'gulp' to build site, run server and watch
+// for changes in the sass – with live reload. 
 
 'use strict';
 
@@ -13,12 +16,12 @@ www.olepetterstokke.no/treehouse/project8
 
 // all modules required
 var gulp = require('gulp'); //Gulp itself
-var webserver = require('gulp-webserver'); //the webserver
+var webserver = require('gulp-webserver'); //webserver with live reload
 var runSequence = require('run-sequence'); //run tasks in sequence
 
 var concat = require('gulp-concat'); //concat Javascript
 var uglify = require('gulp-uglify'); //minify Javascript
-var maps = require('gulp-sourcemaps'); //generating sourcemaps, for both JS and sass
+var maps = require('gulp-sourcemaps'); //generating sourcemaps, both JS and CSS/sass
 
 var sass = require('gulp-sass'); //sass to CSS
 var cleanCSS = require('gulp-clean-css'); //minify css
@@ -27,7 +30,7 @@ var image = require('gulp-image'); //optimize images
 var rename = require('gulp-rename'); //renaming files
 var del = require('del'); //deleting files
 
-//the dist folders
+//declaring the dist folders
 var dist = {
     'content': 'dist/images',
     'styles': 'dist/css',
@@ -38,89 +41,86 @@ var dist = {
     JAVASCRIPT
 *****************************************/
 
-// concat all JS-files to one
+// concat all Javascript-files
 gulp.task('concatScripts', function () {
-    return gulp.src(['js/circle/autogrow.js', //get .js-files
+    return gulp.src(['js/circle/autogrow.js',
         'js/circle/circle.js',
         'js/global.js'])
-    .pipe(maps.init()) //make sourcemap
-    .pipe(concat('all.js')) //concat them
-    .pipe(maps.write('./')) //save sourcemap
-    .pipe(gulp.dest(dist.scripts)) //save all.js
+    .pipe(maps.init())
+    .pipe(concat('all.js'))
+    .pipe(maps.write('./'))
+    .pipe(gulp.dest(dist.scripts));
 });
 
-// take the concatinated all.js file and minify it
+// minify the concatinated Javascript
 gulp.task('scripts', ['concatScripts'], function () {
-    return gulp.src(dist.scripts + '/all.js') //get js
-    .pipe(uglify()) //minify it
-    .pipe(rename('all.min.js')) //rename it
-    .pipe(gulp.dest(dist.scripts)); //save it
+    return gulp.src(dist.scripts + '/all.js')
+    .pipe(uglify())
+    .pipe(rename('all.min.js'))
+    .pipe(gulp.dest(dist.scripts));
 });
 
 /*****************************************
     SASS
 *****************************************/
 
-//compile all sass-files to one CSS file
+// compile and concat sass-files til CSS
 gulp.task('compileSass', function () {
-    return gulp.src('sass/global.scss') //get sass
-    .pipe(maps.init()) //make map
-    .pipe(sass()) //compile sass
-    .pipe(maps.write('./')) //save map
-    .pipe(gulp.dest(dist.styles)); //save css
+    return gulp.src('sass/global.scss')
+    .pipe(maps.init())
+    .pipe(sass())
+    .pipe(maps.write('./'))
+    .pipe(gulp.dest(dist.styles));
 });
 
-//minify the CSS
+// minify CSS
 gulp.task('styles', ['compileSass'], function () {
-    return gulp.src(dist.styles + '/global.css') //get css
-    .pipe(cleanCSS({compatibility: 'ie8'})) //minify it
-    .pipe(rename('all.min.css')) //rename it
-    .pipe(gulp.dest(dist.styles)); //save it
+    return gulp.src(dist.styles + '/global.css')
+    .pipe(cleanCSS({compatibility: 'ie8'}))
+    .pipe(rename('all.min.css'))
+    .pipe(gulp.dest(dist.styles));
 });
 
 /*****************************************
     IMAGES
 *****************************************/
 
-//optimize images
+// optimize images, copy them to dist/images
 gulp.task('images', function () {
-    return gulp.src('images/*') //get images
-    .pipe(image()) //optimize them
-    .pipe(gulp.dest(dist.content)); //save them
+    return gulp.src('images/*') 
+    .pipe(image())
+    .pipe(gulp.dest(dist.content));
 });
 
 /*****************************************
-    FILES
+    MISC FILES
 *****************************************/
 
-//delete dist folder
+// delete dist folder
 gulp.task('clean', function () {
-    return del(['dist']); //delete folder
+    return del(['dist']);
 });
 
-//copy static files (index.html and icons folder)
-gulp.task('copyStaticFiles', function () {
-    return gulp.src([  'index.html', //files to copy
-                'icons/**'], 
-                { base: './' }) //keep folder structure
-    .pipe(gulp.dest('dist')); //copy to dist folder
+// delete leftovers from minification
+gulp.task('deleteJunk', function () {
+    del(['dist/css/global.css', 'dist/js/all.js']);
+});
+
+// copy static files to dist folder
+gulp.task('copyStatic', function () {
+    return gulp.src(['index.html',
+                    'icons/**'], 
+                    { base: './' }) //keep folder structure
+    .pipe(gulp.dest('dist'));
 });
 
 /*****************************************
-    BUILD
+    WEBSERVER
 *****************************************/
 
-//build task - run all build tasks
-gulp.task('build', ['clean'], function () { //clean will run first
-    gulp.start('copyStaticFiles');
-    gulp.start('scripts');
-    gulp.start('styles');
-    gulp.start('images');
-});
-
-//start webserver with live reload
+// start webserver, with live reload
 gulp.task('serve', function () {
-    gulp.src('dist') //start server from dist folder
+    gulp.src('dist')
     .pipe(webserver({
       livereload: true,
       directoryListing: false,
@@ -128,16 +128,29 @@ gulp.task('serve', function () {
     }));
 });
 
-// watch for changes in sass
+// watch for changes in sass to run styles (works with live reload of server)
 gulp.task('watch', function () {
-    gulp.watch('sass/**/*.scss', ['styles']); //run 'styles' if changes to sass files
+    gulp.watch('sass/**/*.scss', ['styles']); 
 });
 
-//default - all tasks are run in sequence to avoid trouble
+/*****************************************
+    BUILD
+*****************************************/
+
+// run all build tasks async after 'clean'
+gulp.task('build', ['clean'], function () {
+    gulp.start('copyStatic');
+    gulp.start('scripts');
+    gulp.start('styles');
+    gulp.start('images');
+});
+
+// default/'gulp' - all tasks run in sequence to avoid trouble
 gulp.task('default', function () {
     runSequence(
         'clean',
-        ['copyStaticFiles', 'scripts', 'styles', 'images'], //running async
+        ['copyStatic', 'scripts', 'styles', 'images'], //run async
+        'deleteJunk',
         'serve',
         'watch');
 });
